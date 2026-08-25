@@ -349,11 +349,15 @@ build_backend_windows() {
   cp -R "$pbs_dir" "$out"
   find "$out" -name "EXTERNALLY-MANAGED" -delete 2>/dev/null || true
 
-  env PYTHONNOUSERSITE=1 PYTHONPATH= KIROCREW_SKIP_FRONTEND=1 \
-    "$out/python.exe" -m pip install --prefer-binary --upgrade --force-reinstall \
-    --no-warn-script-location --disable-pip-version-check "$ROOT"
-
+  # PBS resolves its prefix from the original managed installation after a
+  # Git-Bash copy on Windows. Install to the copied tree explicitly so the
+  # backend that Electron embeds receives both Kiro Crew and its dependencies.
   sp="$out/Lib/site-packages"
+  mkdir -p "$sp"
+  env PYTHONNOUSERSITE=1 PYTHONPATH= KIROCREW_SKIP_FRONTEND=1 \
+    "$out/python.exe" -m pip install --prefer-binary --upgrade --force-reinstall --ignore-installed \
+    --target "$sp" --no-warn-script-location --disable-pip-version-check "$ROOT"
+
   ensure_module_entrypoint "$sp"
   log "Staging dashboard dist into kiro_crew/static/dist…"
   mkdir -p "$sp/kiro_crew/static"
