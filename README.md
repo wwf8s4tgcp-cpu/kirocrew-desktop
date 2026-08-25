@@ -69,9 +69,14 @@ Get-FileHash .\KiroCrew.Setup.<版本号>.exe -Algorithm SHA256
 
 本仓库保留完整源码与自动发布工作流。对于希望自行检查、修改或构建桌面端的用户，请先阅读 [贡献指南](CONTRIBUTING.md) 与 [Windows 安装说明](docs/guides/windows-install.md)。发布工作流位于 [`.github/workflows/publish-github-release.yml`](.github/workflows/publish-github-release.yml)。
 
-## 许可证与致谢
+## 署名与许可证
 
-项目采用 [Apache License 2.0](LICENSE)。本 Windows 发布仓库基于开源 [Kiro Crew](https://github.com/kirodotdev/KiroCrew) 构建；请保留原项目的许可证、NOTICE 与第三方声明。
+| 归属 | 署名 |
+|---|---|
+| 原始项目作者 | [Kiro 团队](https://github.com/kirodotdev/KiroCrew) |
+| Windows 桌面版维护与发布 | [@wwf8s4tgcp](https://github.com/wwf8s4tgcp) |
+
+项目采用 [Apache License 2.0](LICENSE)。请保留原项目的许可证、NOTICE 与第三方声明。
 
 ---
 

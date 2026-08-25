@@ -69,9 +69,14 @@ Get-FileHash .\KiroCrew.Setup.<version>.exe -Algorithm SHA256
 
 The repository retains the full source tree and release automation. If you want to inspect, modify, or build the desktop app yourself, begin with the [contribution guide](CONTRIBUTING.md) and the [Windows installation guide](docs/guides/windows-install.md). The publishing workflow is [`.github/workflows/publish-github-release.yml`](.github/workflows/publish-github-release.yml).
 
-## License and attribution
+## Attribution and license
 
-This project is available under the [Apache License 2.0](LICENSE). This Windows distribution is built from the open-source [Kiro Crew](https://github.com/kirodotdev/KiroCrew) project; please retain the upstream license, NOTICE, and third-party notices.
+| Role | Attribution |
+|---|---|
+| Original project author | [Kiro Team](https://github.com/kirodotdev/KiroCrew) |
+| Windows desktop edition maintenance and publishing | [@wwf8s4tgcp](https://github.com/wwf8s4tgcp) |
+
+This project is available under the [Apache License 2.0](LICENSE). Please retain the upstream license, NOTICE, and third-party notices.
 
 ---
 
