@@ -164,7 +164,6 @@
       "gateway-liveness.js",
       "gateway-recovery.js",
       "renderer-recovery.js",
-    "pierre-perf-log.js",
       "pyspy-dump.js",
       "perf-metrics.js",
       "host-config.js",
@@ -227,7 +226,7 @@
       }
     ],
     "win": {
-      "icon": "icon.png",
+      "icon": "icon.ico",
       "target": [
         "nsis"
       ],

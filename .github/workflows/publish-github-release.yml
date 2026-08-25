@@ -1,0 +1,90 @@
+name: Publish Desktop Release to GitHub
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Desktop version tag, for example desktop-v0.5.1"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark the GitHub Release as a prerelease"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  publish-windows:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ELECTRON_CACHE: ${{ github.workspace }}\.cache\electron
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Stamp desktop version from tag
+        shell: pwsh
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          if ($tag -notmatch '^desktop-v(?<version>\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$') {
+            throw "Desktop tags must use desktop-vX.Y.Z or desktop-vX.Y.Z-prerelease format."
+          }
+          $version = $Matches.version
+          $packagePath = "website/electron/package.json"
+          $package = Get-Content -Raw $packagePath | ConvertFrom-Json
+          $package.version = $version
+          $package | ConvertTo-Json -Depth 100 | Set-Content -Encoding utf8 $packagePath
+          Write-Output "Desktop version: $version"
+
+      - name: Install desktop dependencies
+        shell: pwsh
+        run: npm ci --prefix website
+
+      - name: Build Windows installer
+        shell: bash
+        run: bash packaging/build-desktop.sh
+
+      - name: Locate installer
+        id: artifact
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path . -Recurse -File -Filter "KiroCrew Setup *.exe" |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $installer) { throw "Windows installer was not produced." }
+          "path=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Output "Using installer: $($installer.FullName)"
+
+      - name: Publish release assets and updater metadata
+        shell: pwsh
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $params = @{
+            Repository = $env:GITHUB_REPOSITORY
+            Tag = $tag
+            InstallerPath = "${{ steps.artifact.outputs.path }}"
+            Confirm = $false
+          }
+          if ("${{ inputs.prerelease }}" -eq "true" -or $tag.Contains("-")) { $params.Prerelease = $true }
+          .\scripts\publish-github-release.ps1 @params

@@ -992,6 +992,9 @@ function spawnGateway(resolve) {
             // (two levels up from electron/), so resolve by markers there.
             // macOS/Linux keep the original one-level-up path unchanged.
             KIROCREW_PROJECT_DIR: IS_WIN ? resolveProjectDir() : path.resolve(__dirname, ".."),
+            // Windows console code pages such as GBK cannot encode some gateway log output.
+            // Keep the bundled Python process on UTF-8 so logging cannot prevent startup.
+            ...(IS_WIN ? { PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8" } : {}),
             // Keep CPython bytecode caches OUT of the signed app bundle.
             // Without this, the embedded interpreter writes __pycache__/*.pyc
             // next to the bundled sources on first import, breaking the
