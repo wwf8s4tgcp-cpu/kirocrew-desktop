@@ -62,7 +62,7 @@ jobs:
 
           $backendVersionPath = "src/kiro_crew/__init__.py"
           $backendVersion = Get-Content -Raw $backendVersionPath
-          $versionPattern = [regex]'(?m)^__version__ = ".*"$'
+          $versionPattern = [regex]'(?m)^__version__ = ".*"\r?$'
           $stampedBackendVersion = $versionPattern.Replace(
             $backendVersion,
             "__version__ = `"$version`"",
