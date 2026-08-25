@@ -121,15 +121,16 @@ esac
 
 log() { printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
 
-# Electron invokes the bundled backend as `python -m kiro_crew`, so its module
-# entry point is a runtime requirement, not merely a convenience for developers.
-# Copy it explicitly after pip installation to keep that contract intact even if
-# a platform build backend omits the file from its generated wheel.
-ensure_module_entrypoint() {
-  local site_packages="$1" source="$ROOT/src/kiro_crew/__main__.py"
-  [ -f "$source" ] || { echo "ERROR: source module entry point missing: $source" >&2; exit 1; }
-  [ -d "$site_packages/kiro_crew" ] || { echo "ERROR: installed kiro_crew package missing under $site_packages" >&2; exit 1; }
-  cp "$source" "$site_packages/kiro_crew/__main__.py"
+# Electron invokes the bundled backend as `python -m kiro_crew`, so the full
+# application package is a runtime requirement, not merely a wheel artifact.
+# Copy the checked-out package tree after dependency installation. This removes
+# the Windows PBS prefix ambiguity after Git-Bash copies its managed runtime,
+# while dependencies still come from pip and generated build info is stamped below.
+stage_application_package() {
+  local site_packages="$1" source="$ROOT/src/kiro_crew"
+  [ -d "$source" ] || { echo "ERROR: source package missing: $source" >&2; exit 1; }
+  rm -rf "$site_packages/kiro_crew"
+  cp -R "$source" "$site_packages/kiro_crew"
 }
 
 # Re-stamp every staged backend tree with <dist>, for the Linux multi-format
@@ -268,7 +269,7 @@ build_backend() {
 
   # Stage the dashboard dist into the package's static dir.
   sp="$out/lib/python3.12/site-packages"
-  ensure_module_entrypoint "$sp"
+  stage_application_package "$sp"
   log "Staging dashboard dist into kiro_crew/static/dist…"
   mkdir -p "$sp/kiro_crew/static"
   ( cd "$sp/kiro_crew/static" && rm -rf dist && cp -R "$ROOT/website/dist" dist )
@@ -358,7 +359,7 @@ build_backend_windows() {
     "$out/python.exe" -m pip install --prefer-binary --upgrade --force-reinstall --ignore-installed \
     --target "$sp" --no-warn-script-location --disable-pip-version-check "$ROOT"
 
-  ensure_module_entrypoint "$sp"
+  stage_application_package "$sp"
   log "Staging dashboard dist into kiro_crew/static/dist…"
   mkdir -p "$sp/kiro_crew/static"
   ( cd "$sp/kiro_crew/static" && rm -rf dist && cp -R "$ROOT/website/dist" dist )

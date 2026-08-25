@@ -28,21 +28,24 @@ jobs:
       ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
     steps:
       - name: Check out release source
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: website/package-lock.json
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
 
       - name: Stamp desktop version from tag
         shell: pwsh
@@ -56,6 +59,23 @@ jobs:
           $package = Get-Content -Raw $packagePath | ConvertFrom-Json
           $package.version = $version
           $package | ConvertTo-Json -Depth 100 | Set-Content -Encoding utf8 $packagePath
+
+          $backendVersionPath = "src/kiro_crew/__init__.py"
+          $backendVersion = Get-Content -Raw $backendVersionPath
+          $versionPattern = [regex]'(?m)^__version__ = ".*"$'
+          $stampedBackendVersion = $versionPattern.Replace(
+            $backendVersion,
+            "__version__ = `"$version`"",
+            1
+          )
+          if ($stampedBackendVersion -eq $backendVersion) {
+            throw "Could not stamp the backend version in $backendVersionPath."
+          }
+          [System.IO.File]::WriteAllText(
+            (Join-Path $PWD $backendVersionPath),
+            $stampedBackendVersion,
+            [System.Text.UTF8Encoding]::new($false)
+          )
           Write-Output "Desktop version: $version"
 
       - name: Install desktop dependencies
