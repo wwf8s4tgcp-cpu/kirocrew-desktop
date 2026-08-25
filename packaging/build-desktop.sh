@@ -243,13 +243,16 @@ build_backend() {
   # and skips them -> the gateway crashes on a clean machine with ModuleNotFoundError.
   # An x86_64 python3.12 binary runs under Rosetta transparently, so the same
   # invocation builds both arches' bundles.
+  # --force-reinstall is required because a managed PBS tree may already hold
+  # the same source version from a previous build; otherwise pip can retain an
+  # older module set even though this build is supposed to embed the checked-out code.
   # --prefer-binary: take an older prebuilt wheel over a newer sdist. Some deps
   # have dropped macOS x86_64 wheels in their newest releases (e.g. cryptography
   # >= 49 is arm64-only), and a source build inside the bundle needs toolchains
   # (Rust targets) the build host may lack — an older universal2/x86_64 wheel is
   # the portable choice. No-op where the newest release has a usable wheel.
   env PYTHONNOUSERSITE=1 PYTHONPATH= KIROCREW_SKIP_FRONTEND=1 \
-    "$out/bin/python3.12" -m pip install --prefer-binary \
+    "$out/bin/python3.12" -m pip install --prefer-binary --upgrade --force-reinstall \
     --no-warn-script-location --disable-pip-version-check "$ROOT"
 
   # Stage the dashboard dist into the package's static dir.
@@ -335,7 +338,7 @@ build_backend_windows() {
   find "$out" -name "EXTERNALLY-MANAGED" -delete 2>/dev/null || true
 
   env PYTHONNOUSERSITE=1 PYTHONPATH= KIROCREW_SKIP_FRONTEND=1 \
-    "$out/python.exe" -m pip install --prefer-binary \
+    "$out/python.exe" -m pip install --prefer-binary --upgrade --force-reinstall \
     --no-warn-script-location --disable-pip-version-check "$ROOT"
 
   sp="$out/Lib/site-packages"
