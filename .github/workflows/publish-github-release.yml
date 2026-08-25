@@ -93,8 +93,16 @@ jobs:
           $installer = Get-ChildItem -Path . -Recurse -File -Filter "KiroCrew Setup *.exe" |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if (-not $installer) { throw "Windows installer was not produced." }
-          "path=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Output "Using installer: $($installer.FullName)"
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $version = $tag -replace '^desktop-v', ''
+          $releasePath = Join-Path $installer.DirectoryName "KiroCrew.Setup.$version.exe"
+          Move-Item -LiteralPath $installer.FullName -Destination $releasePath -Force
+          $blockmapSource = "$($installer.FullName).blockmap"
+          if (Test-Path -LiteralPath $blockmapSource -PathType Leaf) {
+            Move-Item -LiteralPath $blockmapSource -Destination "$releasePath.blockmap" -Force
+          }
+          "path=$releasePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Output "Using release installer: $releasePath"
 
       - name: Publish release assets and updater metadata
         shell: pwsh
